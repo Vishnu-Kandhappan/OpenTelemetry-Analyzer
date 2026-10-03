@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OpenTelemetry Metrics Analyzer · VK</title>
+  <meta name="description" content="OpenTelemetry Metrics Analyzer by Vishnu Kandhappan — paste any GitHub link to a Collector component's metadata.yaml and explore metrics, attributes, resource attributes, entities, events and semantic convention versions." />
+  <meta name="author" content="Vishnu Kandhappan" />
+  <meta name="theme-color" content="#07080b" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ff9f43'/%3E%3Cstop offset='1' stop-color='%232ee6d6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpolygon points='32,3 57,17.5 57,46.5 32,61 7,46.5 7,17.5' fill='%2307080b' stroke='url(%23g)' stroke-width='4'/%3E%3Ctext x='32' y='41' font-family='Arial,sans-serif' font-weight='800' font-size='22' text-anchor='middle' fill='url(%23g)'%3EVK%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #07080b;
+      --bg-2: #0b0d12;
+      --panel: rgba(14, 17, 23, 0.86);
+      --panel-solid: #0e1117;
+      --line: #1c212b;
+      --line-2: #2a3140;
+      --fg: #f3ece2;
+      --fg-2: #c9c2b8;
+      --muted: #8b93a1;
+      --orange: #ff9f43;
+      --orange-2: #ffb86c;
+      --orange-glow: rgba(255, 159, 67, 0.35);
+      --teal: #2ee6d6;
+      --teal-2: #7ff3e9;
+      --teal-glow: rgba(46, 230, 214, 0.30);
+      --red: #ff6b6b;
+      --red-bg: rgba(255, 107, 107, 0.08);
+      --green: #5ee6a0;
+      --grad: linear-gradient(120deg, var(--orange) 0%, var(--teal) 100%);
+      --radius: 14px;
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--fg);
+      background:
+        radial-gradient(900px 500px at 8% -10%, rgba(255, 159, 67, 0.12), transparent 60%),
+        radial-gradient(900px 500px at 100% 0%, rgba(46, 230, 214, 0.10), transparent 60%),
+        var(--bg);
+      background-attachment: fixed;
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--teal); text-decoration: none; }
+    a:hover { color: var(--teal-2); text-decoration: underline; }
+    code, .mono { font-family: var(--mono); font-size: 0.86em; }
+    ::selection { background: var(--orange); color: #111; }
+
+    /* ---------- Header ---------- */
+    .site-header {
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      background: rgba(7, 8, 11, 0.78);
+      border-bottom: 1px solid var(--line);
+    }
+    .site-header::after {
+      content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+      background: var(--grad); opacity: 0.55;
+    }
+    .header-inner {
+      max-width: 1240px; margin: 0 auto; padding: 12px 20px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; color: var(--fg); text-decoration: none !important; min-width: 0; }
+    .emblem { width: 44px; height: 44px; flex: none; filter: drop-shadow(0 0 10px var(--orange-glow)); transition: transform .3s; }
+    .brand:hover .emblem { transform: rotate(-8deg) scale(1.05); }
+    .brand-text { display: flex; flex-direction: column; min-width: 0; }
+    .brand-title {
+      font-weight: 800; font-size: 1.08rem; letter-spacing: 0.01em;
+      background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .brand-sub { font-size: 0.74rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .header-links { margin-left: auto; display: flex; gap: 8px; flex: none; }
+    .icon-link {
+      display: inline-flex; align-items: center; gap: 7px;
+      height: 36px; padding: 0 12px; border-radius: 10px;
+      border: 1px solid var(--line-2); color: var(--fg-2); font-size: 0.84rem; font-weight: 500;
+      background: rgba(255,255,255,0.02); transition: all .18s;
+    }
+    .icon-link svg { width: 16px; height: 16px; fill: currentColor; flex: none; }
+    .icon-link:hover { color: var(--teal); border-color: var(--teal); text-decoration: none; box-shadow: 0 0 14px var(--teal-glow); }
+    .icon-link.linkedin:hover { color: var(--orange); border-color: var(--orange); box-shadow: 0 0 14px var(--orange-glow); }
+
+    /* ---------- Layout ---------- */
+    .page { max-width: 1240px; margin: 0 auto; padding: 32px 20px 56px; }
+    .hero { margin-bottom: 22px; }
+    .eyebrow { font-size: 0.74rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--teal); font-weight: 600; }
+    .hero h1 { margin: 6px 0 8px; font-size: clamp(1.6rem, 3.4vw, 2.3rem); font-weight: 800; letter-spacing: -0.01em; line-height: 1.15; }
+    .hero h1 .glow { color: var(--orange); text-shadow: 0 0 22px var(--orange-glow); }
+    .hero p { margin: 0; color: var(--muted); max-width: 760px; font-size: 0.97rem; }
+
+    .card {
+      background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+    }
+
+    /* ---------- Input ---------- */
+    .input-card { position: relative; transition: border-color .2s, box-shadow .2s; }
+    .input-card.dragover { border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-glow); }
+    .input-label { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+    .input-label label { font-weight: 600; font-size: 0.92rem; }
+    .input-label .hint { font-size: 0.78rem; color: var(--muted); }
+    .input-row { display: flex; gap: 10px; }
+    .url-wrap { position: relative; flex: 1; min-width: 0; }
+    .url-wrap svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; fill: var(--muted); pointer-events: none; }
+    input[type="text"], input[type="search"] {
+      width: 100%; height: 46px; padding: 0 40px 0 40px;
+      border-radius: 11px; border: 1px solid var(--line-2);
+      background: var(--bg-2); color: var(--fg); font-size: 0.92rem; font-family: var(--mono);
+      outline: none; transition: border-color .15s, box-shadow .15s;
+    }
+    input[type="text"]::placeholder, input[type="search"]::placeholder { color: #545b68; }
+    input[type="text"]:focus, input[type="search"]:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-glow); }
+    .clear-btn {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      width: 28px; height: 28px; border-radius: 8px; border: none; background: transparent;
+      color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; display: none;
+    }
+    .clear-btn:hover { color: var(--fg); background: rgba(255,255,255,0.06); }
+    .url-wrap.has-value .clear-btn { display: block; }
+
+    .btn {
+      height: 46px; padding: 0 20px; border-radius: 11px; font-weight: 600; font-size: 0.92rem;
+      cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      font-family: var(--sans); transition: transform .12s, box-shadow .18s, background .18s, color .18s, border-color .18s;
+    }
+    .btn-primary { border: none; color: #0b0b0b; background: var(--grad); box-shadow: 0 6px 22px var(--orange-glow); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 28px var(--teal-glow); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: .6; cursor: progress; transform: none; }
+    .btn-ghost { border: 1px solid var(--line-2); color: var(--fg-2); background: transparent; height: 36px; padding: 0 12px; font-size: 0.82rem; border-radius: 9px; }
+    .btn-ghost:hover { border-color: var(--teal); color: var(--teal); }
+    .btn svg { width: 16px; height: 16px; fill: currentColor; }
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(0,0,0,.25); border-top-color: #0b0b0b; border-radius: 50%; animation: spin .7s linear infinite; display: none; }
+    .btn-primary.loading .spinner { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .input-extras { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 12px; }
+    .input-extras .lbl { font-size: 0.78rem; color: var(--muted); margin-right: 2px; }
+    .chip-btn {
+      border: 1px dashed var(--line-2); background: transparent; color: var(--fg-2);
+      font-size: 0.78rem; padding: 4px 10px; border-radius: 999px; cursor: pointer; font-family: var(--sans);
+      transition: all .15s;
+    }
+    .chip-btn:hover { border-style: solid; border-color: var(--orange); color: var(--orange); }
+    .upload-link { margin-left: auto; font-size: 0.8rem; color: var(--muted); }
+    .upload-link button { background: none; border: none; color: var(--teal); cursor: pointer; font-size: inherit; padding: 0; font-family: inherit; }
+    .upload-link button:hover { text-decoration: underline; }
+
+    .resolved {
+      margin-top: 14px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
+      background: rgba(46, 230, 214, 0.04); font-size: 0.8rem; color: var(--muted);
+      display: none; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .resolved.show { display: flex; }
+    .resolved a { font-family: var(--mono); word-break: break-all; }
+    .resolved .tag { color: var(--teal); font-weight: 600; text-transform: uppercase; font-size: 0.7rem; letter-spacing: .08em; }
+
+    /* Progress steps */
+    .steps { display: none; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+    .steps.show { display: flex; }
+    .step { font-size: 0.76rem; color: var(--muted); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); display: inline-flex; align-items: center; gap: 6px; }
+    .step::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--line-2); }
+    .step.active { color: var(--orange); border-color: rgba(255,159,67,.45); }
+    .step.active::before { background: var(--orange); box-shadow: 0 0 8px var(--orange); animation: pulse 1s infinite alternate; }
+    .step.done { color: var(--teal); border-color: rgba(46,230,214,.35); }
+    .step.done::before { background: var(--teal); }
+    .step.fail { color: var(--red); border-color: rgba(255,107,107,.45); }
+    .step.fail::before { background: var(--red); }
+    @keyframes pulse { from { opacity: .4; } to { opacity: 1; } }
+
+    /* ---------- Error ---------- */
+    .error-box {
+      display: none; margin-top: 16px; border: 1px solid rgba(255,107,107,.4); background: var(--red-bg);
+      border-radius: 12px; padding: 16px 18px; animation: fadeIn .25s ease;
+    }
+    .error-box.show { display: block; }
+    .error-head { display: flex; gap: 12px; align-items: flex-start; }
+    .error-icon { width: 30px; height: 30px; flex: none; border-radius: 9px; background: rgba(255,107,107,.15); display: grid; place-items: center; color: var(--red); font-weight: 800; }
+    .error-title { font-weight: 700; color: var(--red); margin: 2px 0 2px; }
+    .error-msg { color: var(--fg-2); font-size: 0.9rem; margin: 0; }
+    .error-sugg { margin: 12px 0 0 42px; }
+    .error-sugg h4 { margin: 0 0 6px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: .1em; color: var(--orange); }
+    .error-sugg ul { margin: 0; padding-left: 18px; color: var(--fg-2); font-size: 0.87rem; }
+    .error-sugg li { margin: 3px 0; }
+    .error-sugg code { color: var(--teal-2); background: rgba(46,230,214,.07); padding: 1px 5px; border-radius: 4px; }
+    .error-detail { margin: 12px 0 0 42px; font-size: 0.78rem; color: var(--muted); }
+    .error-detail summary { cursor: pointer; }
+    .error-detail pre { white-space: pre-wrap; word-break: break-all; font-family: var(--mono); background: var(--bg-2); padding: 10px; border-radius: 8px; border: 1px solid var(--line); margin: 8px 0 0; }
+
+    .notice { display: none; margin-top: 16px; border: 1px solid rgba(255,159,67,.35); background: rgba(255,159,67,.06); color: var(--fg-2); border-radius: 12px; padding: 12px 16px; font-size: 0.88rem; }
+    .notice.show { display: block; }
+    .notice b { color: var(--orange); }
+
+    /* ---------- Results ---------- */
+    #results { display: none; margin-top: 24px; animation: fadeIn .35s ease; }
+    #results.show { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    .overview { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; }
+    .ov-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .ov-title h2 { margin: 0; font-size: 1.35rem; font-weight: 800; }
+    .ov-desc { color: var(--fg-2); margin: 8px 0 14px; font-size: 0.92rem; }
+    .kv { display: grid; grid-template-columns: max-content 1fr; gap: 7px 16px; font-size: 0.85rem; }
+    .kv dt { color: var(--muted); }
+    .kv dd { margin: 0; color: var(--fg); word-break: break-word; }
+    .ov-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-content: start; }
+    .stat {
+      border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: var(--bg-2);
+      cursor: pointer; transition: border-color .15s, transform .15s; text-align: left; font-family: inherit; color: inherit;
+    }
+    .stat:hover { border-color: var(--orange); transform: translateY(-2px); }
+    .stat .n { font-size: 1.5rem; font-weight: 800; color: var(--orange); text-shadow: 0 0 16px var(--orange-glow); line-height: 1.1; }
+    .stat:nth-child(even) .n { color: var(--teal); text-shadow: 0 0 16px var(--teal-glow); }
+    .stat .l { font-size: 0.74rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+    .stat .s { font-size: 0.72rem; color: var(--fg-2); margin-top: 2px; }
+    .stat.zero .n { color: #4b5260; text-shadow: none; }
+
+    .ov-warnings { margin-top: 14px; border-left: 3px solid var(--orange); padding: 6px 12px; background: rgba(255,159,67,.05); border-radius: 0 8px 8px 0; font-size: 0.84rem; color: var(--fg-2); }
+    .ov-warnings b { color: var(--orange); display: block; font-size: 0.74rem; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; }
+
+    /* Pills */
+    .pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line-2); font-size: 0.74rem; color: var(--fg-2); white-space: nowrap; font-weight: 500; }
+    .pill-o { border-color: rgba(255,159,67,.55); color: var(--orange); background: rgba(255,159,67,.06); }
+    .pill-t { border-color: rgba(46,230,214,.5); color: var(--teal); background: rgba(46,230,214,.06); }
+    .pill-r { border-color: rgba(255,107,107,.5); color: var(--red); background: rgba(255,107,107,.06); }
+    .pill-g { border-color: rgba(94,230,160,.45); color: var(--green); background: rgba(94,230,160,.06); }
+    .pill-m { color: var(--muted); }
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .chip { font-family: var(--mono); font-size: 0.74rem; padding: 1px 7px; border-radius: 6px; background: rgba(46,230,214,.07); color: var(--teal-2); border: 1px solid rgba(46,230,214,.18); cursor: pointer; white-space: nowrap; }
+    .chip:hover { border-color: var(--teal); }
+    .chip.o { background: rgba(255,159,67,.07); color: var(--orange-2); border-color: rgba(255,159,67,.2); }
+    .chip.o:hover { border-color: var(--orange); }
+    .chip.static { cursor: default; }
+
+    /* Tabs */
+    .tabs-wrap { margin-top: 22px; }
+    .tabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--line); scrollbar-width: thin; }
+    .tab {
+      flex: none; background: none; border: none; color: var(--muted); font-family: var(--sans); font-size: 0.9rem; font-weight: 600;
+      padding: 12px 14px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; gap: 8px; align-items: center;
+    }
+    .tab:hover { color: var(--fg); }
+    .tab .count { font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; background: var(--line); color: var(--fg-2); }
+    .tab.active { color: var(--orange); border-bottom-color: var(--orange); }
+    .tab.active .count { background: var(--orange); color: #111; }
+    .tab.empty { opacity: .5; }
+    .panel { display: none; padding-top: 16px; }
+    .panel.active { display: block; animation: fadeIn .25s ease; }
+
+    .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+    .search-wrap { position: relative; flex: 1; min-width: 220px; max-width: 420px; }
+    .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; fill: var(--muted); }
+    .search-wrap input { height: 38px; padding: 0 12px 0 36px; font-family: var(--sans); font-size: 0.86rem; }
+    .toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--fg-2); cursor: pointer; user-select: none; }
+    .toggle input { appearance: none; width: 34px; height: 20px; border-radius: 999px; background: var(--line-2); position: relative; cursor: pointer; transition: background .2s; margin: 0; }
+    .toggle input::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--fg); transition: transform .2s; }
+    .toggle input:checked { background: var(--teal); }
+    .toggle input:checked::after { transform: translateX(14px); background: #0b0b0b; }
+    .toolbar .meta { font-size: 0.8rem; color: var(--muted); margin-left: auto; }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-solid); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    thead th {
+      position: sticky; top: 0; background: #11151d; color: var(--orange); font-weight: 600; text-align: left;
+      padding: 10px 12px; border-bottom: 1px solid var(--line-2); white-space: nowrap; font-size: 0.78rem; letter-spacing: .04em; text-transform: uppercase;
+    }
+    thead th.sortable { cursor: pointer; user-select: none; }
+    thead th.sortable:hover { color: var(--orange-2); }
+    thead th .arrow { opacity: .35; margin-left: 4px; font-size: .7rem; }
+    thead th.sorted .arrow { opacity: 1; color: var(--teal); }
+    tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--fg); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:nth-child(even) td { background: rgba(255,255,255,0.012); }
+    tbody tr:hover td { background: rgba(255,159,67,0.04); }
+    td.name { font-family: var(--mono); font-size: 0.82rem; color: var(--fg); white-space: nowrap; }
+    td.name .nm { color: var(--teal-2); font-weight: 500; }
+    td.desc { min-width: 260px; max-width: 520px; color: var(--fg-2); }
+    td .sub { display: block; font-size: 0.72rem; color: var(--muted); margin-top: 3px; font-family: var(--sans); white-space: normal; }
+    td .sub a { font-size: 0.72rem; }
+    .ext-doc { margin-top: 6px; font-size: 0.78rem; color: var(--muted); }
+    .ext-doc summary { cursor: pointer; color: var(--teal); }
+    .warn-line { margin-top: 6px; font-size: 0.76rem; color: var(--orange-2); }
+    mark { background: rgba(255,159,67,.3); color: inherit; border-radius: 3px; padding: 0 1px; }
+
+    .empty-state { text-align: center; padding: 42px 20px; color: var(--muted); border: 1px dashed var(--line-2); border-radius: 12px; }
+    .empty-state .big { font-size: 1.6rem; margin-bottom: 6px; }
+    .empty-state b { color: var(--fg-2); }
+
+    /* Welcome */
+    .welcome { margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .feature { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: rgba(14,17,23,.6); }
+    .feature .ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 10px; background: rgba(255,159,67,.1); color: var(--orange); font-size: 1rem; }
+    .feature:nth-child(2) .ico { background: rgba(46,230,214,.1); color: var(--teal); }
+    .feature h3 { margin: 0 0 4px; font-size: 0.95rem; }
+    .feature p { margin: 0; font-size: 0.83rem; color: var(--muted); }
+    .feature code { color: var(--teal-2); }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--line); margin-top: 40px; }
+    .footer-inner { max-width: 1240px; margin: 0 auto; padding: 20px; display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap; font-size: 0.8rem; color: var(--muted); }
+    .footer-inner .links { display: flex; gap: 14px; flex-wrap: wrap; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 22px; left: 50%; transform: translate(-50%, 20px); background: var(--panel-solid); border: 1px solid var(--teal); color: var(--fg); padding: 10px 16px; border-radius: 10px; font-size: 0.85rem; opacity: 0; pointer-events: none; transition: all .25s; z-index: 100; box-shadow: 0 0 20px var(--teal-glow); }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    @media (max-width: 900px) {
+      .overview { grid-template-columns: 1fr; }
+      .welcome { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .page { padding: 22px 16px 40px; }
+      .header-inner { padding: 10px 16px; }
+      .icon-link span { display: none; }
+      .icon-link { padding: 0 10px; }
+      .header-links .hide-sm { display: none; }
+      .input-row { flex-direction: column; }
+      .btn-primary { width: 100%; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .upload-link { margin-left: 0; width: 100%; }
+      .toolbar .meta { margin-left: 0; width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ===================== HEADER ===================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="https://vishnu-kandhappan.github.io/" title="Vishnu Kandhappan — Home">
+        <svg class="emblem" viewBox="0 0 64 64" aria-label="VK emblem" role="img">
+          <defs>
+            <linearGradient id="vkGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ff9f43" />
+              <stop offset="1" stop-color="#2ee6d6" />
+            </linearGradient>
+          </defs>
+          <polygon points="32,3 57,17.5 57,46.5 32,61 7,46.5 7,17.5" fill="#07080b" stroke="url(#vkGrad)" stroke-width="3.5" stroke-linejoin="round" />
+          <polygon points="32,10 51,21 51,43 32,54 13,43 13,21" fill="none" stroke="url(#vkGrad)" stroke-width="0.8" opacity="0.45" />
+          <text x="32" y="40.5" font-family="Inter, Arial, sans-serif" font-weight="800" font-size="20" text-anchor="middle" fill="url(#vkGrad)" letter-spacing="0.5">VK</text>
+        </svg>
+        <span class="brand-text">
+          <span class="brand-title">OpenTelemetry Metrics Analyzer</span>
+          <span class="brand-sub">by Vishnu Kandhappan · AIOps &amp; Observability</span>
+        </span>
+      </a>
+      <nav class="header-links" aria-label="Profile links">
+        <a class="icon-link linkedin" href="https://www.linkedin.com/in/vishnu-k-b6632169" target="_blank" rel="noopener" title="LinkedIn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
+          <span>LinkedIn</span>
+        </a>
+        <a class="icon-link hide-sm" href="https://github.com/Vishnu-Kandhappan" target="_blank" rel="noopener" title="GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3"/></svg>
+          <span>GitHub</span>
+        </a>
+        <a class="icon-link hide-sm" href="https://medium.com/@vishnukandhappan_18621" target="_blank" rel="noopener" title="Medium blog">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.54 12a6.8 6.8 0 0 1-6.77 6.82A6.8 6.8 0 0 1 0 12a6.8 6.8 0 0 1 6.77-6.82A6.8 6.8 0 0 1 13.54 12zm7.42 0c0 3.54-1.51 6.42-3.38 6.42-1.87 0-3.39-2.88-3.39-6.42s1.52-6.42 3.39-6.42 3.38 2.88 3.38 6.42zM24 12c0 3.17-.53 5.75-1.19 5.75-.66 0-1.19-2.58-1.19-5.75s.53-5.75 1.19-5.75C23.47 6.25 24 8.83 24 12z"/></svg>
+          <span>Medium</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===================== MAIN ===================== -->
+  <main class="page">
+    <section class="hero">
+      <div class="eyebrow">Collector component explorer</div>
+      <h1>Decode any <span class="glow">metadata.yaml</span> in seconds</h1>
+      <p>Paste a GitHub link to an OpenTelemetry Collector component — folder, file or raw URL — and explore its metrics, attributes, resource attributes, entities, events and semantic-convention version in searchable, exportable tables.</p>
+    </section>
+
+    <section class="card input-card" id="inputCard" aria-label="Source input">
+      <div class="input-label">
+        <label for="yamlUrl">GitHub link to a component or its metadata.yaml</label>
+        <span class="hint">Folder, blob, or raw URLs all work · Press <kbd>Enter</kbd> to analyze</span>
+      </div>
+      <div class="input-row">
+        <div class="url-wrap" id="urlWrap">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.6 13.4a1 1 0 0 1 0-1.4l3.5-3.5a1 1 0 1 1 1.4 1.4L12 13.4a1 1 0 0 1-1.4 0zM8.5 18.5a3.5 3.5 0 0 1-2.47-5.98l2.12-2.12a1 1 0 0 1 1.41 1.42l-2.12 2.12a1.5 1.5 0 0 0 2.12 2.12l2.12-2.12a1 1 0 1 1 1.42 1.41l-2.12 2.12a3.48 3.48 0 0 1-2.48 1.03zm6.36-4.95a1 1 0 0 1-.7-1.71l2.12-2.12a1.5 1.5 0 0 0-2.12-2.12l-2.12 2.12a1 1 0 1 1-1.42-1.41l2.12-2.12a3.5 3.5 0 0 1 4.95 4.95l-2.12 2.12a1 1 0 0 1-.71.29z"/></svg>
+          <input id="yamlUrl" type="text" autocomplete="off" spellcheck="false"
+            placeholder="https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/apachereceiver" />
+          <button class="clear-btn" id="clearBtn" type="button" aria-label="Clear input">×</button>
+        </div>
+        <button class="btn btn-primary" id="loadBtn" type="button">
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="btn-label">Analyze</span>
+        </button>
+      </div>
+
+      <div class="input-extras">
+        <span class="lbl">Try:</span>
+        <button class="chip-btn" data-example="https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/apachereceiver">Apache · folder link</button>
+        <button class="chip-btn" data-example="https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/receiver/redisreceiver/metadata.yaml">Redis · blob link</button>
+        <button class="chip-btn" data-example="https://raw.githubusercontent.com/open-telemetry/opentelemetry-collector-contrib/main/receiver/kafkametricsreceiver/metadata.yaml">Kafka · raw link</button>
+        <button class="chip-btn" data-example="https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/hostmetricsreceiver/internal/scraper/cpuscraper">Host CPU scraper</button>
+        <span class="upload-link">or drop a file here · <button type="button" id="uploadBtn">upload metadata.yaml</button></span>
+        <input type="file" id="fileInput" accept=".yaml,.yml,text/yaml,text/plain" hidden />
+      </div>
+
+      <div class="resolved" id="resolved">
+        <span class="tag">Resolved</span>
+        <a id="resolvedLink" href="#" target="_blank" rel="noopener"></a>
+      </div>
+
+      <div class="steps" id="steps" aria-live="polite">
+        <span class="step" data-step="resolve">Resolve URL</span>
+        <span class="step" data-step="fetch">Fetch file</span>
+        <span class="step" data-step="parse">Parse YAML</span>
+        <span class="step" data-step="render">Build tables</span>
+      </div>
+
+      <div class="error-box" id="errorBox" role="alert"></div>
+      <div class="notice" id="notice"></div>
+    </section>
+
+    <!-- Welcome (shown before first analysis) -->
+    <section class="welcome" id="welcome">
+      <div class="feature">
+        <div class="ico">⇄</div>
+        <h3>Smart link resolution</h3>
+        <p>Paste a <code>/tree/</code> folder, a <code>/blob/</code> file, or a raw link — the analyzer finds the raw <code>metadata.yaml</code> for you.</p>
+      </div>
+      <div class="feature">
+        <div class="ico">◈</div>
+        <h3>Full mdatagen coverage</h3>
+        <p>Metrics, attributes, resource attributes, <b>entities</b>, events, internal telemetry and the <code>sem_conv_version</code>, with deep links to semantic conventions.</p>
+      </div>
+      <div class="feature">
+        <div class="ico">⤓</div>
+        <h3>Search, sort &amp; export</h3>
+        <p>Filter any table, show only enabled-by-default items, sort columns, export CSV, and share a link that reloads the same component.</p>
+      </div>
+    </section>
+
+    <!-- Results -->
+    <section id="results" aria-live="polite">
+      <div class="overview">
+        <div class="card" id="ovMain"></div>
+        <div class="stats" id="ovStats"></div>
+      </div>
+
+      <div class="tabs-wrap">
+        <div class="tabs" role="tablist" id="tabs"></div>
+        <div id="panels"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <span>Built by <a href="https://vishnu-kandhappan.github.io/">Vishnu Kandhappan</a> · Runs fully in your browser — nothing is uploaded.</span>
+      <span class="links">
+        <a href="https://www.linkedin.com/in/vishnu-k-b6632169" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://github.com/Vishnu-Kandhappan" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://medium.com/@vishnukandhappan_18621" target="_blank" rel="noopener">Medium</a>
+        <a href="https://github.com/open-telemetry/opentelemetry-collector/blob/main/cmd/mdatagen/metadata-schema.yaml" target="_blank" rel="noopener">mdatagen schema</a>
+      </span>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    /* ================= Helpers ================= */
+    const $ = (s, el = document) => el.querySelector(s);
+    const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+    const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const isObj = v => v && typeof v === "object" && !Array.isArray(v);
+    const asArr = v => Array.isArray(v) ? v : (v == null || v === "" ? [] : [v]);
+    const SEMCONV_BASE = "https://github.com/open-telemetry/semantic-conventions/blob";
+    const FETCH_TIMEOUT_MS = 15000;
+    const MAX_BYTES = 5 * 1024 * 1024;
+
+    class AnalyzerError extends Error {
+      constructor(title, message, suggestions = [], detail = "", step = null) {
+        super(message);
+        this.name = "AnalyzerError";
+        this.title = title;
+        this.suggestions = suggestions;
+        this.detail = detail;
+        this.step = step;
+      }
+    }
+
+    function toast(msg) {
+      const t = $("#toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => t.classList.remove("show"), 2200);
+    }
+
+    async function copyText(text, okMsg) {
+      try {
+        await navigator.clipboard.writeText(text);
+        toast(okMsg || "Copied to clipboard");
+      } catch {
+        const ta = document.createElement("textarea");
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand("copy"); toast(okMsg || "Copied to clipboard"); }
+        catch { toast("Copy failed — please copy manually"); }
+        ta.remove();
+      }
+    }
+
+    /* ================= URL resolution ================= */
+    const EXAMPLE_TREE = "https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/apachereceiver";
+
+    function resolveSource(input) {
+      let s = (input || "").trim().replace(/^<|>$/g, "");
+      if (!s) {
+        throw new AnalyzerError(
+          "No link entered",
+          "Paste a GitHub link to a Collector component folder or its metadata.yaml.",
+          [`Example folder link: <code>${esc(EXAMPLE_TREE)}</code>`,
+           "Or click one of the <b>Try</b> examples below the input.",
+           "Have the file locally? Use <b>upload metadata.yaml</b>."],
+          "", "resolve");
+      }
+      if (!/^https?:\/\//i.test(s)) {
+        if (/^(www\.)?(github\.com|raw\.githubusercontent\.com)\//i.test(s)) s = "https://" + s;
+        else if (/^[\w.-]+\/[\w.-]+\/(tree|blob)\//.test(s)) s = "https://github.com/" + s;
+        else {
+          throw new AnalyzerError(
+            "That doesn't look like a URL",
+            `“${esc(s.slice(0, 120))}” isn't a link the analyzer can open.`,
+            ["Links should start with <code>https://github.com/</code> or <code>https://raw.githubusercontent.com/</code>.",
+             "Copy the address straight from your browser's address bar while viewing the component on GitHub."],
+            "", "resolve");
+        }
+      }
+      let u;
+      try { u = new URL(s); }
+      catch (e) {
+        throw new AnalyzerError("Malformed URL", "The link couldn't be parsed — it may contain spaces or stray characters.",
+          ["Remove any spaces or quotes around the link.", "Paste the link again directly from GitHub."], e.message, "resolve");
+      }
+      const host = u.hostname.toLowerCase();
+      const parts = u.pathname.split("/").filter(Boolean);
+      const ensureYaml = p => /\.ya?ml$/i.test(p) ? { path: p, appended: false } : { path: p.replace(/\/+$/, "") + "/metadata.yaml", appended: true };
+
+      if (host === "raw.githubusercontent.com") {
+        if (parts.length < 3) {
+          throw new AnalyzerError("Incomplete raw URL",
+            "A raw URL needs an owner, repository, branch and path.",
+            ["Expected shape: <code>https://raw.githubusercontent.com/&lt;owner&gt;/&lt;repo&gt;/&lt;branch&gt;/&lt;path&gt;/metadata.yaml</code>"],
+            u.href, "resolve");
+        }
+        const r = ensureYaml(parts.join("/"));
+        return { raw: `https://raw.githubusercontent.com/${r.path}`, appended: r.appended, kind: "raw", input: s };
+      }
+
+      if (host === "github.com" || host === "www.github.com") {
+        const [owner, repo, mode, ...rest] = parts;
+        if (!owner || !repo) {
+          throw new AnalyzerError("Repository not specified",
+            "This link points to a GitHub user or organisation, not to a component.",
+            ["Open the repository, navigate to the component folder (e.g. <code>receiver/apachereceiver</code>) and copy that link."],
+            u.href, "resolve");
+        }
+        if (!mode) {
+          throw new AnalyzerError("That's a repository root",
+            `The link points to <b>${esc(owner)}/${esc(repo)}</b> as a whole — the analyzer needs a specific component.`,
+            ["Navigate into the component folder, e.g. <code>receiver/apachereceiver</code>, and copy that URL.",
+             `Example: <code>${esc(EXAMPLE_TREE)}</code>`],
+            u.href, "resolve");
+        }
+        if (mode === "tree" || mode === "blob" || mode === "raw") {
+          if (rest.length < 1) {
+            throw new AnalyzerError("Branch or path missing",
+              "The link is missing the branch and folder path.",
+              ["Expected shape: <code>https://github.com/&lt;owner&gt;/&lt;repo&gt;/tree/&lt;branch&gt;/&lt;component-path&gt;</code>"],
+              u.href, "resolve");
+          }
+          if (rest.length === 1 && mode === "tree") {
+            throw new AnalyzerError("That's a branch root",
+              `The link points to the top of branch <b>${esc(rest[0])}</b> — not a component folder.`,
+              ["Open a component folder such as <code>receiver/apachereceiver</code> and copy that link instead."],
+              u.href, "resolve");
+          }
+          const r = ensureYaml(rest.join("/"));
+          return { raw: `https://raw.githubusercontent.com/${owner}/${repo}/${r.path}`, appended: r.appended, kind: mode, input: s };
+        }
+        const pageHints = { issues: "an issue", pull: "a pull request", pulls: "pull requests", commit: "a commit", releases: "releases", actions: "Actions", wiki: "the wiki", discussions: "discussions" };
+        throw new AnalyzerError("Unsupported GitHub page",
+          `This link points to ${pageHints[mode] || `a “${esc(mode)}” page`}, not to source files.`,
+          ["Open the <b>Code</b> tab, browse to the component folder and copy that link."],
+          u.href, "resolve");
+      }
+
+      if (host === "gist.githubusercontent.com" || /\.ya?ml$/i.test(u.pathname)) {
+        return { raw: u.href, appended: false, kind: "other", input: s };
+      }
+
+      throw new AnalyzerError("Not a GitHub link",
+        `<b>${esc(host)}</b> isn't supported. The analyzer reads files from GitHub.`,
+        ["Use a <code>github.com</code> or <code>raw.githubusercontent.com</code> link.",
+         "For files hosted elsewhere, download them and use <b>upload metadata.yaml</b>.",
+         "Other hosts work only with a direct link ending in <code>.yaml</code> and CORS enabled."],
+        u.href, "resolve");
+    }
+
+    /* ================= Fetching ================= */
+    async function fetchText(url) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+      let res;
+      try {
+        res = await fetch(url, { signal: ctrl.signal, cache: "no-cache" });
+      } catch (e) {
+        if (e.name === "AbortError") {
+          throw new AnalyzerError("Request timed out",
+            `GitHub didn't respond within ${FETCH_TIMEOUT_MS / 1000} seconds.`,
+            ["Check your internet connection and try again.", "GitHub may be slow right now — check githubstatus.com.", "Download the file and use <b>upload metadata.yaml</b> instead."],
+            url, "fetch");
+        }
+        throw new AnalyzerError("Network or CORS error",
+          "The browser couldn't download the file. This is usually a connectivity issue, a blocked domain, or a host that doesn't allow cross-origin requests.",
+          ["Check that you're online and that <code>raw.githubusercontent.com</code> isn't blocked by a firewall, proxy or ad-blocker.",
+           "Corporate networks sometimes block raw GitHub content — try another network.",
+           "Download the file and use <b>upload metadata.yaml</b>."],
+          `${url}\n${e.message}`, "fetch");
+      } finally {
+        clearTimeout(timer);
+      }
+      return res;
+    }
+
+    async function fetchYaml(src) {
+      let url = src.raw;
+      let res = await fetchText(url);
+
+      // Fallback: auto-appended metadata.yaml → try metadata.yml
+      if (res.status === 404 && src.appended) {
+        const alt = url.replace(/metadata\.yaml$/, "metadata.yml");
+        const res2 = await fetchText(alt);
+        if (res2.ok) { res = res2; url = alt; src.raw = alt; }
+      }
+
+      if (!res.ok) {
+        const st = res.status;
+        if (st === 404) {
+          const sugg = [
+            "Check the branch name and folder path — open the link in GitHub to confirm it exists.",
+            "Make sure the folder actually contains a <code>metadata.yaml</code> (some components keep it in a sub-folder).",
+            "Composite receivers such as <b>hostmetrics</b> keep metrics per scraper, e.g. <code>receiver/hostmetricsreceiver/internal/scraper/cpuscraper</code>.",
+            "Private repositories can't be read from the browser — download the file and upload it instead."
+          ];
+          if (/\/main\//.test(url)) sugg.unshift("If the repository's default branch isn't <code>main</code>, replace it (e.g. <code>master</code>) or use <code>HEAD</code>.");
+          throw new AnalyzerError("metadata.yaml not found (404)",
+            src.appended ? "No <code>metadata.yaml</code> exists at that folder on GitHub." : "GitHub returned 404 for that file.",
+            sugg, url, "fetch");
+        }
+        if (st === 403 || st === 429) {
+          throw new AnalyzerError(`Access limited by GitHub (${st})`,
+            "GitHub refused or rate-limited the request.",
+            ["Wait a minute and try again.", "Too many requests from your network can trigger temporary limits.", "Download the file and use <b>upload metadata.yaml</b>."],
+            url, "fetch");
+        }
+        if (st >= 500) {
+          throw new AnalyzerError(`GitHub server error (${st})`,
+            "GitHub had a problem serving the file.",
+            ["Try again in a few moments.", "Check githubstatus.com for incidents."],
+            url, "fetch");
+        }
+        throw new AnalyzerError(`Unexpected HTTP ${st}`,
+          `GitHub responded with ${st} ${esc(res.statusText || "")}.`,
+          ["Open the resolved link in a new tab to see what GitHub returns.", "Try again, or upload the file instead."],
+          url, "fetch");
+      }
+
+      const len = Number(res.headers.get("content-length") || 0);
+      if (len > MAX_BYTES) {
+        throw new AnalyzerError("File is too large", `The file is ${(len / 1048576).toFixed(1)} MB — metadata.yaml files are normally a few KB.`,
+          ["Make sure the link points to a <code>metadata.yaml</code>, not a data dump or archive."], url, "fetch");
+      }
+      const text = await res.text();
+      if (!text.trim()) {
+        throw new AnalyzerError("The file is empty", "GitHub returned an empty file.",
+          ["Confirm on GitHub that the file has content.", "Check whether you're on the right branch."], url, "fetch");
+      }
+      if (/^\s*<(!doctype|html|head|body)/i.test(text)) {
+        throw new AnalyzerError("Got a web page instead of YAML",
+          "The link returned an HTML page rather than the raw file.",
+          ["Use the folder (<code>/tree/</code>) or file (<code>/blob/</code>) link from GitHub — the analyzer converts it automatically.",
+           "Or click <b>Raw</b> on GitHub and copy that URL."], url, "fetch");
+      }
+      return { text, url };
+    }
+
+    /* ================= Parsing ================= */
+    const KNOWN_SECTIONS = ["metrics", "attributes", "resource_attributes", "entities", "events", "telemetry"];
+
+    function parseYaml(text) {
+      if (typeof window.jsyaml === "undefined") {
+        throw new AnalyzerError("YAML parser didn't load",
+          "The js-yaml library couldn't be loaded from the CDN.",
+          ["Check your connection and reload the page.", "Ad-blockers or strict networks may block <code>cdnjs.cloudflare.com</code>."], "", "parse");
+      }
+      let meta;
+      try {
+        meta = jsyaml.load(text);
+      } catch (e) {
+        const line = e.mark ? e.mark.line + 1 : null;
+        const col = e.mark ? e.mark.column + 1 : null;
+        let snippet = "";
+        if (line) {
+          const lines = text.split(/\r?\n/);
+          const from = Math.max(0, line - 3), to = Math.min(lines.length, line + 2);
+          snippet = lines.slice(from, to).map((l, i) => `${String(from + i + 1).padStart(4)}${from + i + 1 === line ? " ▶ " : "   "}${l}`).join("\n");
+        }
+        throw new AnalyzerError("Invalid YAML",
+          `The file couldn't be parsed${line ? ` — problem near <b>line ${line}</b>${col ? `, column ${col}` : ""}` : ""}.`,
+          ["Check indentation — YAML requires spaces, not tabs.", "Look for unclosed quotes or a missing <code>:</code> after a key.", "Validate the file with a YAML linter."],
+          (e.reason || e.message) + (snippet ? "\n\n" + snippet : ""), "parse");
+      }
+      if (!isObj(meta)) {
+        throw new AnalyzerError("Not a metadata.yaml structure",
+          "The file parsed, but it isn't a YAML mapping (key: value document).",
+          ["Make sure the link points to a component's <code>metadata.yaml</code>, not another YAML/text file."],
+          `Parsed type: ${Array.isArray(meta) ? "array" : typeof meta}`, "parse");
+      }
+      const hasSection = KNOWN_SECTIONS.some(k => meta[k] != null);
+      if (!hasSection && !meta.type && !meta.status) {
+        throw new AnalyzerError("No OpenTelemetry metadata found",
+          "This YAML doesn't contain any of the fields mdatagen uses (type, status, metrics, attributes, resource_attributes, entities…).",
+          ["You may have linked a config, workflow or Helm file — look for the component's <code>metadata.yaml</code>.",
+           "Collector components live under folders like <code>receiver/</code>, <code>processor/</code>, <code>exporter/</code>."],
+          `Top-level keys: ${Object.keys(meta).slice(0, 20).join(", ") || "(none)"}`, "parse");
+      }
+      return meta;
+    }
+
+    /* ================= Normalisation ================= */
+    function stabilityOf(v) {
+      if (isObj(v)) return v.level || "";
+      return v || "";
+    }
+    function metricKind(m) {
+      for (const k of ["gauge", "sum", "histogram", "exponential_histogram"]) {
+        if (m && m[k] != null) {
+          const d = isObj(m[k]) ? m[k] : {};
+          return { kind: k, valueType: d.value_type || d.values || "", monotonic: d.monotonic, temporality: d.aggregation_temporality || "", inputType: d.input_type || "", async: d.async, buckets: d.bucket_boundaries };
+        }
+      }
+      return { kind: "", valueType: "" };
+    }
+    function warningsList(w) {
+      if (!w) return [];
+      if (typeof w === "string") return [{ k: "warning", v: w }];
+      if (Array.isArray(w)) return w.map(v => ({ k: "warning", v: String(v) }));
+      return Object.entries(w).filter(([, v]) => v).map(([k, v]) => ({ k, v: String(v) }));
+    }
+    function semconvLink(ref, ver, kind) {
+      if (!ref) return "";
+      if (/^https?:\/\//.test(ref)) return ref;
+      if (!ver) return "";
+      const v = String(ver).replace(/^v/, "");
+      return kind === "attr" ? `${SEMCONV_BASE}/v${v}/docs/registry/attributes/${ref}` : `${SEMCONV_BASE}/v${v}/docs/${ref}`;
+    }
+    const refsOf = list => asArr(list).map(x => isObj(x) ? (x.ref || x.name || "") : String(x)).filter(Boolean);
+
+    function normalise(meta) {
+      const ver = meta.sem_conv_version ? String(meta.sem_conv_version) : "";
+      const metricsObj = isObj(meta.metrics) ? meta.metrics : {};
+      const metrics = Object.entries(metricsObj).map(([name, m]) => {
+        m = isObj(m) ? m : {};
+        const k = metricKind(m);
+        return {
+          name, enabled: m.enabled, description: m.description || "", extended: m.extended_documentation || "",
+          unit: m.unit ?? "", stability: stabilityOf(m.stability), kind: k.kind, valueType: k.valueType,
+          monotonic: k.monotonic, temporality: k.temporality, inputType: k.inputType,
+          attributes: asArr(m.attributes).map(String), entity: m.entity || "",
+          warnings: warningsList(m.warnings),
+          deprecated: isObj(m.deprecated) ? m.deprecated : null,
+          semconv: semconvLink(m.semantic_convention && m.semantic_convention.ref, ver, "metric"),
+          migrationTo: isObj(m.migration) ? m.migration.to || "" : ""
+        };
+      });
+
+      const attrsObj = isObj(meta.attributes) ? meta.attributes : {};
+      const attributes = Object.entries(attrsObj).map(([key, a]) => {
+        a = isObj(a) ? a : {};
+        return {
+          name: key, override: a.name_override || "", description: a.description || "", type: a.type || "",
+          requirement: a.requirement_level || "", enumv: asArr(a.enum).map(String),
+          semconv: semconvLink(a.semantic_convention && a.semantic_convention.ref, ver, "attr"),
+          usedBy: metrics.filter(m => m.attributes.includes(key)).map(m => m.name)
+        };
+      });
+
+      const rattrsObj = isObj(meta.resource_attributes) ? meta.resource_attributes : {};
+      const entitiesArr = asArr(meta.entities).filter(isObj);
+      const resourceAttributes = Object.entries(rattrsObj).map(([name, a]) => {
+        a = isObj(a) ? a : {};
+        const inEntities = [];
+        entitiesArr.forEach(e => {
+          if (refsOf(e.identity).includes(name)) inEntities.push(`${e.type} (identity)`);
+          else if (refsOf(e.description).includes(name)) inEntities.push(`${e.type} (description)`);
+        });
+        return {
+          name, enabled: a.enabled, description: a.description || "", type: a.type || "",
+          stability: stabilityOf(a.stability), enumv: asArr(a.enum).map(String), warnings: warningsList(a.warnings),
+          semconv: semconvLink(a.semantic_convention && a.semantic_convention.ref, ver, "attr"),
+          entities: inEntities
+        };
+      });
+
+      const entities = entitiesArr.map(e => ({
+        type: e.type || "", brief: e.brief || e.description_text || "", stability: stabilityOf(e.stability),
+        identity: refsOf(e.identity), descr: refsOf(e.description),
+        relationships: asArr(e.relationships).filter(isObj).map(r => ({ type: r.type || "", target: r.target || "" })),
+        metrics: metrics.filter(m => m.entity === e.type).map(m => m.name),
+        events: Object.entries(isObj(meta.events) ? meta.events : {}).filter(([, ev]) => isObj(ev) && ev.entity === e.type).map(([n]) => n)
+      }));
+
+      const eventsObj = isObj(meta.events) ? meta.events : {};
+      const events = Object.entries(eventsObj).map(([name, ev]) => {
+        ev = isObj(ev) ? ev : {};
+        return { name, enabled: ev.enabled, description: ev.description || "", extended: ev.extended_documentation || "", attributes: asArr(ev.attributes).map(String), entity: ev.entity || "", warnings: warningsList(ev.warnings) };
+      });
+
+      const telObj = isObj(meta.telemetry) && isObj(meta.telemetry.metrics) ? meta.telemetry.metrics : {};
+      const telemetry = Object.entries(telObj).map(([name, m]) => {
+        m = isObj(m) ? m : {};
+        const k = metricKind(m);
+        return { name, enabled: m.enabled, description: m.description || "", extended: m.extended_documentation || "", unit: m.unit ?? "", stability: stabilityOf(m.stability), kind: k.kind, valueType: k.valueType, monotonic: k.monotonic, async: k.async, optional: m.optional, attributes: asArr(m.attributes).map(String), warnings: warningsList(m.warnings) };
+      });
+
+      return { meta, ver, metrics, attributes, resourceAttributes, entities, events, telemetry };
+    }
+
+    /* ================= Render helpers ================= */
+    let currentQuery = {};
+    function hl(text, q) {
+      const safe = esc(text);
+      if (!q) return safe;
+      const re = new RegExp("(" + q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + ")", "gi");
+      return safe.replace(re, "<mark>$1</mark>");
+    }
+    function enabledPill(v) {
+      if (v === true) return `<span class="pill pill-g">● enabled</span>`;
+      if (v === false) return `<span class="pill pill-m">○ disabled</span>`;
+      return `<span class="pill pill-m">—</span>`;
+    }
+    function stabilityPill(s) {
+      if (!s) return `<span class="pill pill-m">—</span>`;
+      const l = s.toLowerCase();
+      const cls = l === "stable" ? "pill-g" : (l === "deprecated" || l === "unmaintained") ? "pill-r" : (l === "beta" || l === "release_candidate") ? "pill-t" : "pill-o";
+      return `<span class="pill ${cls}">${esc(s)}</span>`;
+    }
+    function chips(list, opts = {}) {
+      if (!list || !list.length) return `<span class="pill-m">—</span>`;
+      return `<div class="chips">${list.map(x => {
+        const goto = opts.goto ? ` data-goto="${opts.goto}" data-q="${esc(x)}" title="Show in ${opts.gotoLabel || opts.goto}"` : "";
+        return `<span class="chip ${opts.o ? "o" : ""} ${opts.goto ? "" : "static"}"${goto}>${esc(x)}</span>`;
+      }).join("")}</div>`;
+    }
+    function warnHtml(list) {
+      if (!list || !list.length) return "";
+      return list.map(w => `<div class="warn-line">⚠ <b>${esc(w.k.replace(/_/g, " "))}:</b> ${esc(w.v)}</div>`).join("");
+    }
+    function extHtml(t) {
+      return t ? `<details class="ext-doc"><summary>Extended documentation</summary>${esc(t)}</details>` : "";
+    }
+    function semHtml(link) {
+      return link ? `<span class="sub"><a href="${esc(link)}" target="_blank" rel="noopener">↗ semantic convention</a></span>` : "";
+    }
+
+    /* ================= Section definitions ================= */
+    function sectionDefs(d) {
+      const hasEntityCol = d.metrics.some(m => m.entity);
+      return [
+        {
+          id: "metrics", label: "Metrics", rows: d.metrics, enabledFilter: true,
+          empty: "This component doesn't define any <b>metrics</b>.",
+          search: r => [r.name, r.description, r.unit, r.kind, r.valueType, r.stability, r.entity, ...r.attributes].join(" "),
+          cols: [
+            { key: "name", label: "Metric", sort: r => r.name, cls: "name",
+              html: (r, q) => `<span class="nm">${hl(r.name, q)}</span>${r.migrationTo ? `<span class="sub">migrates to <code>${esc(r.migrationTo)}</code></span>` : ""}${semHtml(r.semconv)}`,
+              csv: r => r.name },
+            { key: "enabled", label: "Default", sort: r => r.enabled === true ? 0 : 1, html: r => enabledPill(r.enabled), csv: r => r.enabled ?? "" },
+            { key: "kind", label: "Type", sort: r => r.kind,
+              html: r => r.kind ? `<span class="pill pill-o">${esc(r.kind)}</span>${r.kind === "sum" ? `<span class="sub">${r.monotonic === true ? "monotonic" : r.monotonic === false ? "non-monotonic" : ""}${r.temporality ? ` · ${esc(r.temporality)}` : ""}</span>` : ""}` : `<span class="pill-m">—</span>`,
+              csv: r => r.kind },
+            { key: "valueType", label: "Value", sort: r => r.valueType, html: r => r.valueType ? `<span class="mono">${esc(r.valueType)}</span>${r.inputType ? `<span class="sub">parsed from ${esc(r.inputType)}</span>` : ""}` : "—", csv: r => r.valueType },
+            { key: "unit", label: "Unit", sort: r => String(r.unit), html: r => r.unit !== "" ? `<span class="mono">${esc(r.unit)}</span>` : "—", csv: r => r.unit },
+            { key: "stability", label: "Stability", sort: r => r.stability,
+              html: r => stabilityPill(r.stability) + (r.deprecated ? `<span class="sub">since ${esc(r.deprecated.since || "?")}${r.deprecated.note ? ` — ${esc(r.deprecated.note)}` : ""}</span>` : ""),
+              csv: r => r.stability },
+            { key: "attributes", label: "Attributes", sort: r => r.attributes.length, html: r => chips(r.attributes, { goto: "attributes", gotoLabel: "Attributes" }), csv: r => r.attributes.join("; ") },
+            ...(hasEntityCol ? [{ key: "entity", label: "Entity", sort: r => r.entity, html: r => r.entity ? chips([r.entity], { goto: "entities", gotoLabel: "Entities", o: true }) : "—", csv: r => r.entity }] : []),
+            { key: "description", label: "Description", cls: "desc", sort: r => r.description, html: (r, q) => hl(r.description, q) + extHtml(r.extended) + warnHtml(r.warnings), csv: r => r.description }
+          ]
+        },
+        {
+          id: "attributes", label: "Attributes", rows: d.attributes,
+          empty: "This component doesn't define any data-point <b>attributes</b>.",
+          search: r => [r.name, r.override, r.description, r.type, r.requirement, ...r.enumv].join(" "),
+          cols: [
+            { key: "name", label: "Attribute", cls: "name", sort: r => r.name,
+              html: (r, q) => `<span class="nm">${hl(r.override || r.name, q)}</span>${r.override ? `<span class="sub">key: <code>${esc(r.name)}</code></span>` : ""}${semHtml(r.semconv)}`,
+              csv: r => r.override || r.name },
+            { key: "type", label: "Type", sort: r => r.type, html: r => r.type ? `<span class="pill pill-t">${esc(r.type)}</span>` : "—", csv: r => r.type },
+            { key: "requirement", label: "Requirement", sort: r => r.requirement, html: r => r.requirement ? `<span class="pill ${r.requirement === "required" ? "pill-o" : r.requirement === "opt_in" ? "pill-m" : ""}">${esc(r.requirement)}</span>` : `<span class="pill pill-m">recommended*</span>`, csv: r => r.requirement || "recommended (default)" },
+            { key: "enumv", label: "Allowed values", sort: r => r.enumv.length, html: r => chips(r.enumv, { o: true }), csv: r => r.enumv.join("; ") },
+            { key: "usedBy", label: "Used by", sort: r => r.usedBy.length, html: r => r.usedBy.length ? chips(r.usedBy, { goto: "metrics", gotoLabel: "Metrics" }) : "—", csv: r => r.usedBy.join("; ") },
+            { key: "description", label: "Description", cls: "desc", sort: r => r.description, html: (r, q) => hl(r.description, q), csv: r => r.description }
+          ]
+        },
+        {
+          id: "resource_attributes", label: "Resource Attributes", rows: d.resourceAttributes, enabledFilter: true,
+          empty: "This component doesn't define any <b>resource attributes</b>.",
+          search: r => [r.name, r.description, r.type, r.stability, ...r.enumv, ...r.entities].join(" "),
+          cols: [
+            { key: "name", label: "Resource attribute", cls: "name", sort: r => r.name, html: (r, q) => `<span class="nm">${hl(r.name, q)}</span>${semHtml(r.semconv)}`, csv: r => r.name },
+            { key: "enabled", label: "Default", sort: r => r.enabled === true ? 0 : 1, html: r => enabledPill(r.enabled), csv: r => r.enabled ?? "" },
+            { key: "type", label: "Type", sort: r => r.type, html: r => r.type ? `<span class="pill pill-t">${esc(r.type)}</span>` : "—", csv: r => r.type },
+            { key: "stability", label: "Stability", sort: r => r.stability, html: r => stabilityPill(r.stability), csv: r => r.stability },
+            { key: "enumv", label: "Allowed values", sort: r => r.enumv.length, html: r => chips(r.enumv, { o: true }), csv: r => r.enumv.join("; ") },
+            { key: "entities", label: "Entity role", sort: r => r.entities.join(), html: r => r.entities.length ? chips(r.entities, { goto: "entities", gotoLabel: "Entities", o: true }) : "—", csv: r => r.entities.join("; ") },
+            { key: "description", label: "Description", cls: "desc", sort: r => r.description, html: (r, q) => hl(r.description, q) + warnHtml(r.warnings), csv: r => r.description }
+          ]
+        },
+        {
+          id: "entities", label: "Entities", rows: d.entities,
+          empty: "This component doesn't define any <b>entities</b> yet.<br><span style='font-size:.85rem'>Entities group resource attributes into identity and description sets — newer mdatagen schemas support them.</span>",
+          search: r => [r.type, r.brief, r.stability, ...r.identity, ...r.descr, ...r.relationships.map(x => x.type + " " + x.target)].join(" "),
+          cols: [
+            { key: "type", label: "Entity type", cls: "name", sort: r => r.type, html: (r, q) => `<span class="nm">${hl(r.type, q)}</span>`, csv: r => r.type },
+            { key: "stability", label: "Stability", sort: r => r.stability, html: r => stabilityPill(r.stability), csv: r => r.stability },
+            { key: "identity", label: "Identity attributes", sort: r => r.identity.length, html: r => chips(r.identity, { goto: "resource_attributes", gotoLabel: "Resource Attributes" }), csv: r => r.identity.join("; ") },
+            { key: "descr", label: "Descriptive attributes", sort: r => r.descr.length, html: r => chips(r.descr, { goto: "resource_attributes", gotoLabel: "Resource Attributes" }), csv: r => r.descr.join("; ") },
+            { key: "relationships", label: "Relationships", sort: r => r.relationships.length,
+              html: r => r.relationships.length ? r.relationships.map(x => `<div class="mono" style="white-space:nowrap"><span style="color:var(--orange-2)">${esc(x.type)}</span> → ${esc(x.target)}</div>`).join("") : "—",
+              csv: r => r.relationships.map(x => `${x.type} -> ${x.target}`).join("; ") },
+            { key: "metrics", label: "Metrics / events", sort: r => r.metrics.length + r.events.length,
+              html: r => (r.metrics.length ? chips(r.metrics, { goto: "metrics", gotoLabel: "Metrics" }) : "—") + (r.events.length ? `<span class="sub">events: ${esc(r.events.join(", "))}</span>` : ""),
+              csv: r => [...r.metrics, ...r.events].join("; ") },
+            { key: "brief", label: "Brief", cls: "desc", sort: r => r.brief, html: (r, q) => hl(r.brief, q), csv: r => r.brief }
+          ]
+        },
+        {
+          id: "events", label: "Events", rows: d.events, enabledFilter: true,
+          empty: "This component doesn't define any <b>events</b>.",
+          search: r => [r.name, r.description, r.entity, ...r.attributes].join(" "),
+          cols: [
+            { key: "name", label: "Event", cls: "name", sort: r => r.name, html: (r, q) => `<span class="nm">${hl(r.name, q)}</span>`, csv: r => r.name },
+            { key: "enabled", label: "Default", sort: r => r.enabled === true ? 0 : 1, html: r => enabledPill(r.enabled), csv: r => r.enabled ?? "" },
+            { key: "attributes", label: "Attributes", sort: r => r.attributes.length, html: r => chips(r.attributes, { goto: "attributes", gotoLabel: "Attributes" }), csv: r => r.attributes.join("; ") },
+            { key: "entity", label: "Entity", sort: r => r.entity, html: r => r.entity ? chips([r.entity], { goto: "entities", o: true }) : "—", csv: r => r.entity },
+            { key: "description", label: "Description", cls: "desc", sort: r => r.description, html: (r, q) => hl(r.description, q) + extHtml(r.extended) + warnHtml(r.warnings), csv: r => r.description }
+          ]
+        },
+        {
+          id: "telemetry", label: "Internal Telemetry", rows: d.telemetry, enabledFilter: true,
+          empty: "This component doesn't declare any internal <b>telemetry</b> metrics.",
+          search: r => [r.name, r.description, r.unit, r.kind, r.stability, ...r.attributes].join(" "),
+          cols: [
+            { key: "name", label: "Metric", cls: "name", sort: r => r.name, html: (r, q) => `<span class="nm">${hl(r.name, q)}</span>${r.optional ? `<span class="sub">optional</span>` : ""}`, csv: r => r.name },
+            { key: "enabled", label: "Default", sort: r => r.enabled === true ? 0 : 1, html: r => enabledPill(r.enabled), csv: r => r.enabled ?? "" },
+            { key: "kind", label: "Type", sort: r => r.kind, html: r => r.kind ? `<span class="pill pill-o">${esc(r.kind)}</span>${r.async ? `<span class="sub">async</span>` : ""}` : "—", csv: r => r.kind },
+            { key: "valueType", label: "Value", sort: r => r.valueType, html: r => r.valueType ? `<span class="mono">${esc(r.valueType)}</span>` : "—", csv: r => r.valueType },
+            { key: "unit", label: "Unit", sort: r => String(r.unit), html: r => r.unit !== "" ? `<span class="mono">${esc(r.unit)}</span>` : "—", csv: r => r.unit },
+            { key: "stability", label: "Stability", sort: r => r.stability, html: r => stabilityPill(r.stability), csv: r => r.stability },
+            { key: "description", label: "Description", cls: "desc", sort: r => r.description, html: (r, q) => hl(r.description, q) + extHtml(r.extended) + warnHtml(r.warnings), csv: r => r.description }
+          ]
+        }
+      ];
+    }
+
+    /* ================= Rendering ================= */
+    let state = { sections: [], component: "component", sourceUrl: "", data: null };
+
+    function renderOverview(d, src) {
+      const m = d.meta;
+      const st = isObj(m.status) ? m.status : {};
+      const title = m.display_name || m.type || "Unnamed component";
+      const cls = st.class || "";
+      const stabEntries = isObj(st.stability) ? Object.entries(st.stability) : [];
+      const stabHtml = stabEntries.length
+        ? stabEntries.map(([lvl, sigs]) => `${stabilityPill(lvl)} <span style="color:var(--fg-2)">${esc(asArr(sigs).join(", "))}</span>`).join("<br>")
+        : "—";
+      const codeowners = isObj(st.codeowners) ? asArr(st.codeowners.active) : [];
+      const semUrl = m.sem_conv_url || (d.ver ? `https://github.com/open-telemetry/semantic-conventions/releases/tag/v${String(d.ver).replace(/^v/, "")}` : "");
+      const ghUrl = src && src.raw && src.raw.startsWith("https://raw.githubusercontent.com/")
+        ? src.raw.replace(/^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/(?:refs\/heads\/)?/, "https://github.com/$1/$2/blob/")
+        : "";
+
+      const rows = [
+        ["Type", m.type ? `<code>${esc(m.type)}</code>` : "—"],
+        m.deprecated_type ? ["Deprecated alias", `<code>${esc(m.deprecated_type)}</code>`] : null,
+        cls ? ["Class", `<span class="pill pill-t">${esc(cls)}</span>`] : null,
+        m.parent ? ["Parent", `<code>${esc(m.parent)}</code>`] : null,
+        ["Semantic conventions", d.ver ? (semUrl ? `<a href="${esc(semUrl)}" target="_blank" rel="noopener"><span class="pill pill-o">v${esc(String(d.ver).replace(/^v/, ""))}</span> ↗</a>` : `<span class="pill pill-o">v${esc(d.ver)}</span>`) : `<span class="pill-m">not declared (sem_conv_version)</span>`],
+        ["Stability", stabHtml],
+        st.distributions ? ["Distributions", chips(asArr(st.distributions), { o: true })] : null,
+        m.scope_name ? ["Scope name", `<code>${esc(m.scope_name)}</code>`] : null,
+        codeowners.length ? ["Code owners", esc(codeowners.join(", "))] : null,
+        st.unsupported_platforms ? ["Unsupported on", esc(asArr(st.unsupported_platforms).join(", "))] : null
+      ].filter(Boolean);
+
+      const warnings = asArr(st.warnings);
+      const deprecation = isObj(st.deprecation) ? Object.entries(st.deprecation) : [];
+
+      $("#ovMain").innerHTML = `
+        <div class="ov-title">
+          <h2>${esc(title)}</h2>
+          ${cls ? `<span class="pill pill-t">${esc(cls)}</span>` : ""}
+          ${d.ver ? `<span class="pill pill-o">semconv v${esc(String(d.ver).replace(/^v/, ""))}</span>` : ""}
+        </div>
+        ${m.description ? `<p class="ov-desc">${esc(m.description)}</p>` : `<div style="height:12px"></div>`}
+        <dl class="kv">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
+        ${warnings.length ? `<div class="ov-warnings"><b>Component warnings</b>${warnings.map(w => `• ${esc(w)}`).join("<br>")}</div>` : ""}
+        ${deprecation.length ? `<div class="ov-warnings"><b>Deprecation</b>${deprecation.map(([c, v]) => `• ${esc(c)}: ${esc(isObj(v) ? [v.date, v.migration].filter(Boolean).join(" — ") : v)}`).join("<br>")}</div>` : ""}
+        <div class="ov-actions">
+          ${ghUrl ? `<a class="btn btn-ghost" href="${esc(ghUrl)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M14 3h7v7h-2V6.4l-9.3 9.3-1.4-1.4L17.6 5H14V3zM5 5h6v2H7v10h10v-4h2v6H5V5z"/></svg>View on GitHub</a>` : ""}
+          ${src && src.raw ? `<button class="btn btn-ghost" id="shareBtn" type="button"><svg viewBox="0 0 24 24"><path d="M18 16a3 3 0 0 0-2.4 1.2l-6.7-3.4a3 3 0 0 0 0-1.6l6.7-3.4A3 3 0 1 0 15 7c0 .3 0 .5.1.8L8.4 11.2a3 3 0 1 0 0 1.6l6.7 3.4A3 3 0 1 0 18 16z"/></svg>Copy share link</button>` : ""}
+          <button class="btn btn-ghost" id="exportAllBtn" type="button"><svg viewBox="0 0 24 24"><path d="M12 3v10.6l3.3-3.3 1.4 1.4L12 16.4l-4.7-4.7 1.4-1.4 3.3 3.3V3h0zM5 18h14v2H5z"/></svg>Export JSON</button>
+        </div>`;
+
+      const enabledMetrics = d.metrics.filter(x => x.enabled === true).length;
+      const enabledRA = d.resourceAttributes.filter(x => x.enabled === true).length;
+      const stats = [
+        { id: "metrics", n: d.metrics.length, l: "Metrics", s: d.metrics.length ? `${enabledMetrics} enabled by default` : "" },
+        { id: "attributes", n: d.attributes.length, l: "Attributes", s: "" },
+        { id: "resource_attributes", n: d.resourceAttributes.length, l: "Resource attrs", s: d.resourceAttributes.length ? `${enabledRA} enabled` : "" },
+        { id: "entities", n: d.entities.length, l: "Entities", s: "" },
+        { id: "events", n: d.events.length, l: "Events", s: "" },
+        { id: "telemetry", n: d.telemetry.length, l: "Internal telemetry", s: "" }
+      ];
+      $("#ovStats").innerHTML = stats.map(x => `
+        <button class="stat ${x.n ? "" : "zero"}" data-tab="${x.id}" type="button">
+          <div class="n">${x.n}</div><div class="l">${x.l}</div>${x.s ? `<div class="s">${esc(x.s)}</div>` : ""}
+        </button>`).join("");
+    }
+
+    function renderTabs(defs) {
+      const firstWithData = (defs.find(s => s.rows.length) || defs[0]).id;
+      $("#tabs").innerHTML = defs.map(s => `
+        <button class="tab ${s.rows.length ? "" : "empty"}" role="tab" data-tab="${s.id}" aria-controls="panel-${s.id}">
+          ${s.label}<span class="count">${s.rows.length}</span>
+        </button>`).join("");
+      $("#panels").innerHTML = defs.map(s => `
+        <div class="panel" role="tabpanel" id="panel-${s.id}" data-panel="${s.id}">
+          ${s.rows.length ? `
+            <div class="toolbar">
+              <div class="search-wrap">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2a8 8 0 0 1 6.32 12.9l5.39 5.4-1.42 1.4-5.39-5.38A8 8 0 1 1 10 2zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12z"/></svg>
+                <input type="search" placeholder="Filter ${esc(s.label.toLowerCase())}…" data-search="${s.id}" aria-label="Filter ${esc(s.label)}" />
+              </div>
+              ${s.enabledFilter ? `<label class="toggle"><input type="checkbox" data-enabled="${s.id}" /> Enabled only</label>` : ""}
+              <button class="btn btn-ghost" data-csv="${s.id}" type="button"><svg viewBox="0 0 24 24"><path d="M12 3v10.6l3.3-3.3 1.4 1.4L12 16.4l-4.7-4.7 1.4-1.4 3.3 3.3V3zM5 18h14v2H5z"/></svg>CSV</button>
+              <span class="meta" data-meta="${s.id}"></span>
+            </div>
+            <div class="table-wrap"><table><thead><tr>
+              ${s.cols.map(c => `<th class="sortable" data-sort="${s.id}" data-key="${c.key}">${esc(c.label)}<span class="arrow">↕</span></th>`).join("")}
+            </tr></thead><tbody data-body="${s.id}"></tbody></table></div>`
+          : `<div class="empty-state"><div class="big">∅</div>${s.empty}</div>`}
+        </div>`).join("");
+      defs.forEach(s => { s.q = ""; s.enabledOnly = false; s.sortKey = null; s.sortDir = 1; if (s.rows.length) renderBody(s); });
+      activateTab(firstWithData, false);
+    }
+
+    function renderBody(s) {
+      const q = s.q.trim().toLowerCase();
+      let rows = s.rows.filter(r => (!s.enabledOnly || r.enabled === true) && (!q || s.search(r).toLowerCase().includes(q)));
+      if (s.sortKey) {
+        const col = s.cols.find(c => c.key === s.sortKey);
+        rows = rows.slice().sort((a, b) => {
+          const va = col.sort(a), vb = col.sort(b);
+          return (typeof va === "number" && typeof vb === "number" ? va - vb : String(va ?? "").localeCompare(String(vb ?? ""), undefined, { numeric: true })) * s.sortDir;
+        });
+      }
+      const body = $(`[data-body="${s.id}"]`);
+      body.innerHTML = rows.length
+        ? rows.map(r => `<tr>${s.cols.map(c => `<td class="${c.cls || ""}">${c.html(r, s.q.trim())}</td>`).join("")}</tr>`).join("")
+        : `<tr><td colspan="${s.cols.length}"><div class="empty-state" style="border:none">No ${esc(s.label.toLowerCase())} match <b>“${esc(s.q)}”</b>${s.enabledOnly ? " with <b>Enabled only</b> on" : ""}.</div></td></tr>`;
+      $(`[data-meta="${s.id}"]`).textContent = `${rows.length} of ${s.rows.length} shown`;
+      $$(`[data-sort="${s.id}"]`).forEach(th => {
+        const on = th.dataset.key === s.sortKey;
+        th.classList.toggle("sorted", on);
+        th.querySelector(".arrow").textContent = on ? (s.sortDir === 1 ? "↑" : "↓") : "↕";
+      });
+    }
+
+    function activateTab(id, scroll = true) {
+      $$(".tab").forEach(t => { const on = t.dataset.tab === id; t.classList.toggle("active", on); t.setAttribute("aria-selected", on); });
+      $$(".panel").forEach(p => p.classList.toggle("active", p.dataset.panel === id));
+      if (scroll) $(".tabs-wrap").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function gotoFilter(tabId, q) {
+      const s = state.sections.find(x => x.id === tabId);
+      if (!s) return;
+      activateTab(tabId);
+      if (!s.rows.length) return;
+      s.q = q; s.enabledOnly = false;
+      const input = $(`[data-search="${tabId}"]`); if (input) input.value = q;
+      const chk = $(`[data-enabled="${tabId}"]`); if (chk) chk.checked = false;
+      renderBody(s);
+    }
+
+    /* ================= CSV / JSON export ================= */
+    function download(name, content, type) {
+      const blob = new Blob([content], { type });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+    function exportCsv(id) {
+      const s = state.sections.find(x => x.id === id);
+      if (!s) return;
+      const q = s.q.trim().toLowerCase();
+      const rows = s.rows.filter(r => (!s.enabledOnly || r.enabled === true) && (!q || s.search(r).toLowerCase().includes(q)));
+      const cell = v => { const t = String(v ?? ""); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+      const csv = [s.cols.map(c => cell(c.label)).join(","), ...rows.map(r => s.cols.map(c => cell(c.csv(r))).join(","))].join("\n");
+      download(`${state.component}_${id}.csv`, "\uFEFF" + csv, "text/csv;charset=utf-8");
+      toast(`Exported ${rows.length} ${s.label.toLowerCase()}`);
+    }
+
+    /* ================= UI state ================= */
+    const STEP_ORDER = ["resolve", "fetch", "parse", "render"];
+    function setStep(step, status) {
+      $("#steps").classList.add("show");
+      const idx = STEP_ORDER.indexOf(step);
+      $$(".step").forEach(el => {
+        const i = STEP_ORDER.indexOf(el.dataset.step);
+        el.classList.remove("active", "done", "fail");
+        if (i < idx) el.classList.add("done");
+        else if (i === idx) el.classList.add(status);
+      });
+    }
+    function setLoading(on) {
+      const b = $("#loadBtn");
+      b.disabled = on; b.classList.toggle("loading", on);
+      $(".btn-label", b).textContent = on ? "Analyzing…" : "Analyze";
+    }
+    function hideMessages() {
+      $("#errorBox").classList.remove("show");
+      $("#notice").classList.remove("show");
+    }
+    function showError(err) {
+      const e = err instanceof AnalyzerError ? err
+        : new AnalyzerError("Something went wrong", "An unexpected error occurred while analyzing the file.",
+            ["Try again.", "If it keeps happening, open the browser console (F12) for details."], String(err && err.stack || err));
+      if (e.step) setStep(e.step, "fail");
+      $("#errorBox").innerHTML = `
+        <div class="error-head">
+          <div class="error-icon">!</div>
+          <div><div class="error-title">${esc(e.title)}</div><p class="error-msg">${e.message}</p></div>
+        </div>
+        ${e.suggestions.length ? `<div class="error-sugg"><h4>Try this</h4><ul>${e.suggestions.map(s => `<li>${s}</li>`).join("")}</ul></div>` : ""}
+        ${e.detail ? `<details class="error-detail"><summary>Technical details</summary><pre>${esc(e.detail)}</pre></details>` : ""}`;
+      $("#errorBox").classList.add("show");
+      console.error(err);
+    }
+
+    function showResults(meta, src, label) {
+      setStep("render", "active");
+      const d = normalise(meta);
+      state.data = d;
+      state.component = (meta.type || "component").toString().replace(/[^\w.-]+/g, "_");
+      state.sourceUrl = src ? src.raw : "";
+      state.sections = sectionDefs(d);
+      renderOverview(d, src);
+      renderTabs(state.sections);
+      $("#welcome").style.display = "none";
+      $("#results").classList.add("show");
+      setStep("render", "done");
+      $$(".step").forEach(el => { el.classList.remove("active"); el.classList.add("done"); });
+
+      const total = d.metrics.length + d.attributes.length + d.resourceAttributes.length + d.entities.length + d.events.length + d.telemetry.length;
+      if (!total) {
+        const n = $("#notice");
+        n.innerHTML = `<b>Heads up:</b> ${esc(label)} parsed fine, but it defines no metrics, attributes, resource attributes, entities or events. Some components (e.g. exporters, processors) only describe their status — or their metrics live in sub-component folders.`;
+        n.classList.add("show");
+      }
+      document.title = `${meta.display_name || meta.type || "Component"} · OpenTelemetry Metrics Analyzer`;
+      toast(`Loaded ${meta.display_name || meta.type || "component"}`);
+    }
+
+    async function analyzeUrl(input) {
+      hideMessages();
+      $("#resolved").classList.remove("show");
+      setLoading(true);
+      setStep("resolve", "active");
+      try {
+        const src = resolveSource(input);
+        $("#resolvedLink").href = src.raw;
+        $("#resolvedLink").textContent = src.raw;
+        $("#resolved").classList.add("show");
+
+        setStep("fetch", "active");
+        const { url } = await (async () => { const r = await fetchYaml(src); src._text = r.text; return r; })();
+        $("#resolvedLink").href = url; $("#resolvedLink").textContent = url;
+
+        setStep("parse", "active");
+        const meta = parseYaml(src._text);
+        showResults(meta, src, "The file");
+
+        const params = new URLSearchParams(location.search);
+        params.set("url", input.trim());
+        history.replaceState(null, "", `${location.pathname}?${params.toString()}`);
+      } catch (err) {
+        showError(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function analyzeFile(file) {
+      hideMessages();
+      $("#resolved").classList.remove("show");
+      if (!file) return;
+      if (!/\.ya?ml$/i.test(file.name) && file.type && !/yaml|text/.test(file.type)) {
+        showError(new AnalyzerError("Unsupported file type", `“${esc(file.name)}” doesn't look like a YAML file.`,
+          ["Choose a file named <code>metadata.yaml</code> (or <code>.yml</code>)."]));
+        return;
+      }
+      if (file.size > MAX_BYTES) {
+        showError(new AnalyzerError("File is too large", `${esc(file.name)} is ${(file.size / 1048576).toFixed(1)} MB.`, ["metadata.yaml files are normally only a few KB — check you picked the right file."]));
+        return;
+      }
+      setStep("fetch", "active");
+      const reader = new FileReader();
+      reader.onerror = () => showError(new AnalyzerError("Couldn't read the file", "The browser failed to read the selected file.", ["Try selecting it again.", "Make sure the file isn't open/locked by another program."], "", "fetch"));
+      reader.onload = () => {
+        try {
+          setStep("parse", "active");
+          const meta = parseYaml(String(reader.result || ""));
+          showResults(meta, null, `“${file.name}”`);
+          history.replaceState(null, "", location.pathname);
+        } catch (err) { showError(err); }
+      };
+      reader.readAsText(file);
+    }
+
+    /* ================= Events ================= */
+    const urlInput = $("#yamlUrl");
+    const syncClear = () => $("#urlWrap").classList.toggle("has-value", !!urlInput.value);
+    urlInput.addEventListener("input", syncClear);
+    urlInput.addEventListener("keydown", e => { if (e.key === "Enter") analyzeUrl(urlInput.value); });
+    urlInput.addEventListener("paste", () => setTimeout(() => { syncClear(); }, 0));
+    $("#clearBtn").addEventListener("click", () => { urlInput.value = ""; syncClear(); urlInput.focus(); hideMessages(); });
+    $("#loadBtn").addEventListener("click", () => analyzeUrl(urlInput.value));
+    $$("[data-example]").forEach(b => b.addEventListener("click", () => { urlInput.value = b.dataset.example; syncClear(); analyzeUrl(b.dataset.example); }));
+    $("#uploadBtn").addEventListener("click", () => $("#fileInput").click());
+    $("#fileInput").addEventListener("change", e => { analyzeFile(e.target.files[0]); e.target.value = ""; });
+
+    const card = $("#inputCard");
+    ["dragenter", "dragover"].forEach(ev => card.addEventListener(ev, e => { e.preventDefault(); card.classList.add("dragover"); }));
+    ["dragleave", "drop"].forEach(ev => card.addEventListener(ev, e => { e.preventDefault(); card.classList.remove("dragover"); }));
+    card.addEventListener("drop", e => {
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) return analyzeFile(f);
+      const t = e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text/plain");
+      if (t) { urlInput.value = t.trim(); syncClear(); analyzeUrl(t); }
+    });
+
+    document.addEventListener("click", e => {
+      const tab = e.target.closest("[data-tab]");
+      if (tab) return activateTab(tab.dataset.tab, tab.classList.contains("stat"));
+      const chip = e.target.closest("[data-goto]");
+      if (chip) return gotoFilter(chip.dataset.goto, chip.dataset.q);
+      const th = e.target.closest("[data-sort]");
+      if (th) {
+        const s = state.sections.find(x => x.id === th.dataset.sort);
+        if (s.sortKey === th.dataset.key) s.sortDir *= -1; else { s.sortKey = th.dataset.key; s.sortDir = 1; }
+        return renderBody(s);
+      }
+      const csv = e.target.closest("[data-csv]");
+      if (csv) return exportCsv(csv.dataset.csv);
+      if (e.target.closest("#shareBtn")) {
+        return copyText(`${location.origin}${location.pathname}?url=${encodeURIComponent(urlInput.value.trim() || state.sourceUrl)}`, "Share link copied");
+      }
+      if (e.target.closest("#exportAllBtn") && state.data) {
+        const d = state.data;
+        download(`${state.component}_metadata.json`, JSON.stringify(d.meta, null, 2), "application/json");
+        toast("Exported metadata as JSON");
+      }
+    });
+    document.addEventListener("input", e => {
+      const id = e.target.dataset && e.target.dataset.search;
+      if (id) { const s = state.sections.find(x => x.id === id); s.q = e.target.value; renderBody(s); }
+    });
+    document.addEventListener("change", e => {
+      const id = e.target.dataset && e.target.dataset.enabled;
+      if (id) { const s = state.sections.find(x => x.id === id); s.enabledOnly = e.target.checked; renderBody(s); }
+    });
+    document.addEventListener("keydown", e => {
+      if (e.key === "/" && document.activeElement.tagName !== "INPUT") { e.preventDefault(); urlInput.focus(); }
+    });
+
+    // Auto-load from ?url=
+    const initial = new URLSearchParams(location.search).get("url");
+    if (initial) {
+      urlInput.value = initial; syncClear();
+      window.addEventListener("load", () => analyzeUrl(initial));
+    }
+
+    // Expose for testing
+    window.__otelAnalyzer = { resolveSource, parseYaml, normalise };
+  })();
+  </script>
+</body>
+</html>
